@@ -1,0 +1,74 @@
+C: 100
+C++: 80
+CSHARP: 30
+
+    
+fd   # answer counts - overall and local. - do it in a loop
+fd   # weights to different tags - manually construct the weights and give score based on these weights
+fd   # score for the answers - get all scores and then sum them up for a user
+fd   # user reputation and acceptance rate - get from the site.
+    
+fd   # then give different weights to each of the above factors and build a profile
+fd   # change the score depending on the number of questions suggested to that user (cooling rate?)
+kvk   # diversity in recommendation ?? 
+kvk   # complexity of question. ranking the question and recommending tough ones to expert and easy ones to novice
+
+for i in range(0,47):  
+  f = open('data/c_answers_'+str(i)+'.txt', 'r')
+  data = json.loads(f.read())
+  f.close()
+  print i
+  for item in data['items']:
+    if item['owner']['user_id'] in d:
+      if item['owner']['user_id'] in count.keys():
+        count[item['owner']['user_id']] += 1
+      else:
+        count[item['owner']['user_id']] = 1
+        
+for i in range(1,268):
+  f = open('data/c_tags_'+str(i)+'.txt','r')
+  data = json.loads(f.read())
+  f.close()
+  for item in data['items']:
+    if item['user_id'] not in count.keys():
+      count[item['user_id']] = {}
+    count[item['user_id']][item['name']] = item['count']
+  print i
+
+weight = {}
+weight['c'] = 10
+weight['c++'] = 8
+weight['c#'] = 4
+weight['visual-c++'] = 4
+weight['objective-c'] = 4
+
+scores = {}
+for user_id in count:
+  for tag in count[user_id]:
+    if tag in weight:
+      if not user_id in scores:
+        scores[user_id] = weight[tag] * count[user_id][tag]
+      else:
+        scores[user_id] += weight[tag] * count[user_id][tag]
+        
+score = {}
+for i in range(1, 81):
+    f = open('data/c_user_data_'+str(i)+'.txt','r')
+    data = json.loads(f.read())
+    f.close()
+    for item in data['items']:
+        if item['user_id'] not in score.keys():
+            score[item['user_id']] = item['reputation']
+        else:
+            score[item['user_id']] += item['reputation']
+        if 'accept_rate' in item.keys():
+            score[item['user_id']] += 25 * item['accept_rate']
+    print i
+    
+final_scores = {}
+for user in d:
+    final_scores[user] = 0
+    if user in scores.keys():
+        final_scores[user] += scores[user]
+    if user in score.keys():
+        final_scores[user] += score[user]

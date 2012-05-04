@@ -78,6 +78,31 @@ class Fetcher:
             f.close()
             content.append(json.loads(final_content))
         return content
+        
+    def getUserData(self, tag):
+        f = open('data/'+tag+'_users.txt', 'r')
+        users = json.loads(f.read())
+        f.close()
+        url = "https://api.stackexchange.com/2.0/users/%s?order=desc&sort=reputation&site=stackoverflow"
+        batches = [users[i:i+10] for i in range(0, len(users), 10)]
+        content = []
+        # For each batch - get the page, save it on disk, append it to content
+        # batch size set to 3 (change batches line if another size is required)
+        for (counter, batch) in enumerate(batches):
+            if os.path.isfile('data/'+tag+'_user_data_'+str(counter+1)+'.txt'):
+                print "Data - "+tag+" Page - "+str(counter+1)+" already exists"
+                continue
+            ids = str(batch[0])
+            for user in batch[1:]:
+                ids += ";"+str(user)
+            print "Getting Data " + str(counter+1)
+            temp_content = StringIO(urllib2.urlopen(url % ids).read())
+            final_content = gzip.GzipFile(fileobj=temp_content).read()
+            f = open('data/'+tag+'_user_data_'+str(counter+1)+'.txt', 'w')
+            f.write(final_content)
+            f.close()
+            content.append(json.loads(final_content))
+        return content
 
 
 print "Creating the content fetcher ..."
